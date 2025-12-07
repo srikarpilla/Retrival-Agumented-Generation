@@ -1,338 +1,70 @@
-# ⚡ 5-Minute Setup Guide - RAG Recipe Chatbot
+Project Report: AI-Powered Recipe Assistant
+Project Title: RAG-Powered Recipe Chatbot using Google Gemini
 
-Get your chatbot running in 5 minutes with Google Gemini!
+Technologies: Python, Streamlit, ChromaDB, Google Gemini API
 
-## Step 1: Get Free API Key (2 minutes)
+Date: December 7, 2025
 
-1. **Visit**: https://makersuite.google.com/app/apikey
-2. **Sign in** with your Google account
-3. **Click** "Create API Key"
-4. **Select** a Google Cloud project (or create new - it's free!)
-5. **Copy** the API key that appears
+1. Introduction
+The AI-Powered Recipe Assistant is an intelligent chatbot designed to help users discover cooking recipes and receive culinary advice. Unlike standard recipe search engines, this application uses Retrieval-Augmented Generation (RAG) to "read" a specific database of trusted recipes before answering. This ensures the AI provides accurate, specific instructions based on known data, rather than hallucinating ingredients.
 
-![API Key Example](https://via.placeholder.com/600x100?text=Your+API+Key+Will+Appear+Here)
+2. Problem Statement
+General AI models (like ChatGPT or standard Gemini) have vast knowledge but can sometimes invent recipes that do not exist or mix up ingredients. Additionally, users often struggle to find specific recipes within large, unorganized cookbooks or websites. There is a need for a tool that combines the conversational ability of AI with the accuracy of a dedicated recipe database.
 
----
+3. Objectives
+To build a user-friendly web interface using Streamlit.
 
-## Step 2: Install & Run (3 minutes)
+To implement a Vector Database (ChromaDB) for storing and retrieving recipe data efficiently.
 
-### Option A: Copy-Paste Method (Easiest)
+To integrate Google Gemini (LLM) to generate natural language responses.
 
-1. **Create a new folder**:
-```bash
-mkdir recipe-chatbot
-cd recipe-chatbot
-```
+To ensure the system runs locally on Windows with stability and rate-limit protection.
 
-2. **Create `requirements.txt`**:
-```text
-streamlit==1.31.0
-chromadb==0.4.22
-sentence-transformers==2.3.1
-google-generativeai==0.3.2
-beautifulsoup4==4.12.3
-requests==2.31.0
-```
+4. Technical Architecture
+The system consists of three main components:
 
-3. **Copy the complete `app.py` code** from the artifact above
+The Database (ChromaDB): Stores recipes not as text, but as "vector embeddings" (mathematical representations of meaning). This allows the system to understand that "spaghetti" is related to "pasta" even if the exact word isn't used.
 
-4. **Install & Run**:
-```bash
-pip install -r requirements.txt
-export GOOGLE_API_KEY="paste-your-key-here"
-streamlit run app.py
-```
+The Brain (Google Gemini): A Large Language Model that takes the user's question and the relevant recipes found in the database to construct a helpful answer.
 
-### Option B: Git Clone Method
+The Interface (Streamlit): A clean, web-based UI where users can chat with the bot and manage the database.
 
-```bash
-# Clone repository
-git clone <your-repo-url>
-cd rag-recipe-chatbot
+Workflow: User Query -> Search Vector DB -> Retrieve Best Matches -> Send to Gemini AI -> Generate Answer
 
-# Install dependencies
-pip install -r requirements.txt
+5. Key Features
+Semantic Search: Users can ask "What can I make with eggs?" and the system will find recipes like "Spaghetti Carbonara" or "French Toast" automatically.
 
-# Set API key
-export GOOGLE_API_KEY="your-key-here"
+Context-Aware Answers: The AI knows exactly which ingredients and steps belong to which recipe.
 
-# Run
-streamlit run app.py
-```
+Rate-Limit Protection: Includes smart delays to prevent exceeding Google API free-tier limits.
 
----
+Data Persistence: Recipes are saved locally, so the database does not need to be rebuilt every time the app restarts.
 
-## Step 3: Test It! (1 minute)
+6. Implementation Details
+Language: Python 3.13
 
-1. **Browser opens** automatically at `http://localhost:8501`
-2. **Paste your API key** in the sidebar
-3. **Click "Initialize System"** - wait 2 seconds
-4. **Try a query**: "What desserts do you have?"
-5. **Success!** 🎉
+Libraries:
 
----
+streamlit: For the frontend UI.
 
-## Common Issues & Fixes
+chromadb: For vector storage.
 
-### ❌ "No module named 'google.generativeai'"
-```bash
-pip install google-generativeai
-```
+google-generativeai: To connect to Gemini models.
 
-### ❌ "API key not found"
-```bash
-# Make sure you exported it:
-export GOOGLE_API_KEY="your-actual-key"
+Models Used:
 
-# Or on Windows:
-set GOOGLE_API_KEY=your-actual-key
-```
+Embedding: models/text-embedding-004
 
-### ❌ "Rate limit exceeded"
-- You're on free tier! Wait a minute
-- Or upgrade to paid tier (still very cheap)
+Generation: models/gemini-flash-latest (or gemini-1.5-flash)
 
-### ❌ "Model not found"
-- Check your API key is correct
-- Make sure you created it for the right project
+7. Challenges & Solutions
+Challenge: "Quota Exceeded" (429) errors from the Google API.
 
----
+Solution: Implemented a 2-second sleep timer between database uploads to respect rate limits.
 
-## Verify It's Working
+Challenge: Windows DLL/Connection errors.
 
-Try these test queries:
+Solution: Switched from local sentence-transformers to Google Embeddings and implemented connection caching (@st.cache_resource).
 
-1. **Basic Search**: "Show me dessert recipes"
-   - ✅ Should list chocolate chip cookies, banana bread
-
-2. **Specific Recipe**: "How do I make carbonara?"
-   - ✅ Should provide step-by-step instructions
-
-3. **Ingredient Query**: "What can I cook with chicken?"
-   - ✅ Should suggest chicken tikka masala, chicken soup
-
-4. **Follow-up**: "Can you tell me more about the first one?"
-   - ✅ Should remember previous context
-
----
-
-## Performance Expectations
-
-- **Initialization**: 1-2 seconds
-- **First query**: 2-3 seconds (model loading)
-- **Subsequent queries**: 1-2 seconds
-- **Database search**: <100ms
-
-**If it's slower**: Check your internet connection or try Gemini Flash model
-
----
-
-## What You Should See
-
-### 1. Sidebar
-```
-⚙️ Configuration
-[Google API Key input]
-[Model Selection: gemini-1.5-flash]
-[Initialize System button]
-
-📊 Database Stats
-Total Recipes: 15
-
-💡 Example Questions
-- What desserts...
-```
-
-### 2. Main Chat
-```
-🍳 Recipe RAG Chatbot
-Ask me anything about recipes...
-
-[Chat interface with your messages]
-```
-
-### 3. Example Interaction
-```
-You: What Italian recipes do you have?
-
-🤖 Assistant: I found some delicious Italian recipes! 
-Here are a few:
-
-1. **Spaghetti Carbonara** - A classic Roman pasta...
-2. **Margherita Pizza** - Simple and delicious...
-3. **Caprese Salad** - Fresh tomatoes and mozzarella...
-
-Would you like the detailed recipe for any of these?
-```
-
----
-
-## Customization (Optional)
-
-### Change Model Quality
-In the sidebar, switch between:
-- **gemini-1.5-flash** (faster, cheaper, good enough)
-- **gemini-1.5-pro** (slower, pricier, better quality)
-
-### Adjust Number of Results
-In `app.py`, modify:
-```python
-Config.TOP_K_RESULTS = 5  # Show more recipe options
-```
-
-### Change Temperature
-For more creative responses:
-```python
-generation_config = {
-    "temperature": 0.9,  # More creative (0.0-1.0)
-}
-```
-
----
-
-## Deploy to Cloud (Optional - 5 more minutes)
-
-### Streamlit Cloud (Free & Easy)
-
-1. **Push to GitHub**:
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin <your-repo-url>
-git push -u origin main
-```
-
-2. **Deploy**:
-   - Go to https://streamlit.io/cloud
-   - Click "New app"
-   - Select your repository
-   - Add secret: `GOOGLE_API_KEY = "your-key"`
-   - Click "Deploy"
-
-3. **Done!** Your app is live with a public URL
-
----
-
-## Free Tier Limits
-
-**Google Gemini 1.5 Flash (Free)**:
-- ✅ 15 requests per minute
-- ✅ 1 million tokens per day
-- ✅ Enough for thousands of queries
-
-**What This Means**:
-- Perfect for hackathon demos
-- Can handle 100+ concurrent users
-- Essentially unlimited for development
-
-**If You Hit Limits**:
-- Wait 1 minute between heavy use
-- Or upgrade to paid (still very cheap)
-
----
-
-## Cost Calculator
-
-### Hackathon Phase (Free Tier)
-- Queries: Unlimited (within rate limits)
-- Cost: **$0**
-- Perfect for: Demos, judging, testing
-
-### If You Win (Paid Tier)
-- 1,000 queries: **$0.10**
-- 10,000 queries: **$1.00**
-- 100,000 queries: **$10.00**
-
-Compare to other providers: 60x cheaper!
-
----
-
-## Next Steps
-
-### Level 1: Basic (You're Here!)
-✅ Chatbot working  
-✅ Sample recipes loaded  
-✅ Basic queries working  
-
-### Level 2: Enhance
-- [ ] Add real web scraping
-- [ ] Include recipe images
-- [ ] Add dietary filters
-- [ ] Improve prompts
-
-### Level 3: Production
-- [ ] Deploy to cloud
-- [ ] Add authentication
-- [ ] Set up monitoring
-- [ ] Add caching
-
----
-
-## Troubleshooting Checklist
-
-- [ ] Python 3.8+ installed? (`python --version`)
-- [ ] All packages installed? (`pip list`)
-- [ ] API key set? (`echo $GOOGLE_API_KEY`)
-- [ ] Internet connection working?
-- [ ] Port 8501 available?
-
----
-
-## Success Indicators
-
-✅ **You're good to go if:**
-1. App loads without errors
-2. "Initialize System" completes successfully
-3. First query returns a recipe
-4. Follow-up questions work
-5. Database shows 15 recipes
-
----
-
-## Help & Resources
-
-- **API Issues**: https://ai.google.dev/docs
-- **Get API Key**: https://makersuite.google.com/app/apikey
-- **Streamlit Help**: https://docs.streamlit.io/
-- **ChromaDB Docs**: https://docs.trychroma.com/
-
----
-
-## Ready to Win! 🏆
-
-Your RAG chatbot is now:
-- ✅ Fully functional
-- ✅ Production-ready
-- ✅ Free to run
-- ✅ Easy to demo
-- ✅ Hackathon-ready
-
-**Go build something amazing!** 🚀
-
----
-
-## Quick Command Reference
-
-```bash
-# Setup
-pip install -r requirements.txt
-export GOOGLE_API_KEY="your-key"
-
-# Run locally
-streamlit run app.py
-
-# Stop
-Ctrl + C
-
-# Reset database (if needed)
-rm -rf chroma_db/
-
-# Check API key
-echo $GOOGLE_API_KEY
-
-# Update packages
-pip install --upgrade google-generativeai streamlit
-```
-
-**Total Time: 5 minutes. Total Cost: $0. Total Awesome: 100%** 🎉
+8. Conclusion
+The project successfully demonstrates how RAG technology can create a "smart" cookbook. The chatbot provides accurate, context-based answers and offers a significant improvement over simple keyword searching. Future improvements could include adding image recognition for ingredients or deploying the app to the cloud.

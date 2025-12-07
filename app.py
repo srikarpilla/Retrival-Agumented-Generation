@@ -22,7 +22,7 @@ class Config:
     COLLECTION_NAME = "recipes_v6"
 
     EMBEDDING_MODEL = "models/text-embedding-004"
-    GEMINI_MODEL = "models/gemini-2.0-flash"
+    GEMINI_MODEL = "models/gemini-2.0-flash-exp"
 
 
 # ============================================================================
@@ -235,3 +235,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

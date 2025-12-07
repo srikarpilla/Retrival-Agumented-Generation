@@ -1,6 +1,6 @@
 """
-RAG-Powered Recipe Chatbot (Stable Windows Version)
-Google Gemini 2.0 + Google Embeddings + Streamlit Secrets Support
+RAG-Powered Recipe Chatbot (Stable Production Version)
+Fixes: Uses 'gemini-flash-latest' to avoid Quota 429 Errors
 """
 
 import streamlit as st
@@ -18,11 +18,18 @@ class Config:
     # API Key: First Try Streamlit Secrets, fallback to environment
     GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", os.getenv("GOOGLE_API_KEY", ""))
 
-    CHROMA_PERSIST_DIR = "./chroma_db_stable"
-    COLLECTION_NAME = "recipes_v6"
+    # Database Settings
+    CHROMA_PERSIST_DIR = "./chroma_db_production"
+    COLLECTION_NAME = "recipes_production_v1"
 
+    # MODELS
+    # We use 'text-embedding-004' for data (stable)
     EMBEDDING_MODEL = "models/text-embedding-004"
-    GEMINI_MODEL = "models/gemini-2.0-flash-exp"
+    
+    # CRITICAL FIX: Use 'gemini-flash-latest' 
+    # This alias automatically points to the stable, free-tier eligible model (1.5 Flash)
+    # avoiding the "Limit: 0" error of the experimental 2.0 models.
+    GEMINI_MODEL = "models/gemini-flash-latest"
 
 
 # ============================================================================
@@ -111,7 +118,8 @@ class VectorDBManager:
                 ids=[f"recipe_{idx}"]
             )
 
-            time.sleep(1.5)
+            # Sleep to prevent rate limits on data ingestion
+            time.sleep(2.0)
             progress.progress((idx + 1) / total, text=f"Added {recipe['title']}")
 
         progress.empty()
@@ -135,8 +143,10 @@ class RAGChatbot:
         self.chat = self.model.start_chat(history=[])
     
     def generate_response(self, user_query: str) -> str:
+        # 1. Retrieve
         retrieved = self.vector_db.search(user_query)
         
+        # 2. Context
         if retrieved:
             ctx = "\n\n".join([
                 f"Name: {r['title']}\nIngredients: {r['ingredients']}\nInstructions: {r['instructions']}"
@@ -156,11 +166,13 @@ Use recipe content if relevant.
         else:
             prompt = f"User asked: {user_query}. Provide a helpful cooking answer."
 
+        # 3. Generate
         try:
             response = self.chat.send_message(prompt)
             return response.text
         except Exception as e:
-            return f"AI Error: {e}"
+            # Fallback error handling
+            return f"AI Error: {str(e)} (Try checking your API Key or Quota)"
 
 
 # ============================================================================
@@ -186,14 +198,18 @@ def get_db_connection(api_key: str):
 # ============================================================================
 def main():
     st.set_page_config(page_title="Chef Bot", page_icon="🍳")
-    st.title("🍳 AI Recipe Assistant (Gemini 2.0)")
+    st.title("🍳 AI Recipe Assistant")
 
-    # Get API key directly from secrets
+    # Get API key from secrets or input
     api_key = Config.GOOGLE_API_KEY
+    
+    # If not in secrets, ask in sidebar
+    if not api_key:
+        with st.sidebar:
+            api_key = st.text_input("Enter Google API Key", type="password")
 
     if not api_key:
-        st.error("❌ No Google API Key found in Streamlit Secrets or environment variables.")
-        st.info("Add a secrets.toml file:\n\nGOOGLE_API_KEY = \"your_key_here\"")
+        st.warning("👈 Please enter your API Key to start.")
         return
 
     # Initialize DB + chatbot
@@ -216,7 +232,10 @@ def main():
                 db.add_recipes(RecipeScraper.scrape_sample_recipes())
                 st.rerun()
         else:
-            st.success(f"{db.collection.count()} recipes loaded")
+            st.success(f"✅ {db.collection.count()} recipes loaded")
+        
+        st.divider()
+        st.caption("Using Model: " + Config.GEMINI_MODEL)
 
     # Chat UI
     for m in st.session_state.messages:
@@ -226,7 +245,7 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
 
-        with st.spinner("Thinking..."):
+        with st.spinner("Cooking up an answer..."):
             reply = st.session_state.chatbot.generate_response(prompt)
 
         st.session_state.messages.append({"role": "assistant", "content": reply})
@@ -235,4 +254,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
